@@ -28,6 +28,7 @@ export const handler: APIGatewayProxyHandler = async (
     userId,
     todoId,
     done: false,
+    attachmentUrl: '',
     createdAt: new Date().toLocaleDateString(),
     ...newTodo
   }

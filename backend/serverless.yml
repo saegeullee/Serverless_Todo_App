@@ -20,6 +20,7 @@ provider:
     IMAGES_S3_BUCKET: todoitem-images-${self:provider.stage}
     AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
     AUTH_0_SECRET_FIELD: auth0Secret
+    SIGNED_URL_EXPIRATION: 300
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'ap-northeast-2'}
@@ -37,6 +38,12 @@ provider:
 
     - Effect: Allow
       Action:
+        - s3:PutObject
+        - s3:GetObject
+      Resource: arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}
+
+    - Effect: Allow
+      Action:
         - secretsmanager:GetSecretValue
       Resource: !Ref Auth0Secret
 
@@ -49,7 +56,6 @@ functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
-  # TODO: Configure this function
   GetTodos:
     handler: src/lambda/http/getTodos.handler
     events:
@@ -58,7 +64,6 @@ functions:
           path: todos
           cors: true
 
-  # # TODO: Configure this function
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
     events:
@@ -67,13 +72,13 @@ functions:
           path: todos
           cors: true
 
-  # # TODO: Configure this function
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
     events:
       - http:
           method: patch
           path: todos/{todoId}
+          cors: true
 
   # # TODO: Configure this function
   # DeleteTodo:
@@ -82,16 +87,28 @@ functions:
   #     - http:
   #         method: delete
   #         path: todos/{todoId}
-  # # TODO: Configure this function
-  # GenerateUploadUrl:
-  #   handler: src/lambda/http/generateUploadUrl.handler
-  #   events:
-  #     - http:
-  #         method: post
-  #         path: todos/{todoId}/attachment
+
+  GenerateUploadUrl:
+    handler: src/lambda/http/generateUploadUrl.handler
+    events:
+      - http:
+          method: post
+          path: todos/{todoId}/attachment
+          cors: true
 
 resources:
   Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Header: "'Content-Type, X-Amz-Date, Authorization'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
     TODOImagesBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -117,10 +134,12 @@ resources:
           Id: MyPolicy
           Version: '2012-10-17'
           Statement:
-            - Sid: PublicReadForGetBucketObjects
+            - Sid: PublicReadWriteBucketPolicy
               Effect: Allow
               Principal: '*'
-              Action: 's3:GetObject'
+              Action:
+                - s3:GetObject
+                - s3:PutObject
               Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
         Bucket: !Ref TODOImagesBucket
 
