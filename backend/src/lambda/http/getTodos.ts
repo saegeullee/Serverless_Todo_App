@@ -18,11 +18,9 @@ const todoTable = process.env.TODO_TABLE
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  // TODO: Get all TODO items for a current user
   console.log('Current Processing Event: ', event)
 
   const userId = getUserId(event)
-
   const result = await docClient
     .query({
       TableName: todoTable,

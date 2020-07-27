@@ -18,8 +18,6 @@ const todoTable = process.env.TODO_TABLE
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  // TODO: Implement creating a new TODO item
-
   const userId = getUserId(event)
   const todoId = uuid.v4()
   const newTodo: CreateTodoRequest = JSON.parse(event.body)
