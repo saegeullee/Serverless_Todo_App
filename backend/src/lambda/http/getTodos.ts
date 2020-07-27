@@ -7,6 +7,8 @@ import {
 } from 'aws-lambda'
 
 import * as AWS from 'aws-sdk'
+import { getUserId } from '../utils'
+
 AWS.config.correctClockSkew = true
 
 const docClient = new AWS.DynamoDB.DocumentClient()
@@ -19,9 +21,15 @@ export const handler: APIGatewayProxyHandler = async (
   // TODO: Get all TODO items for a current user
   console.log('Current Processing Event: ', event)
 
+  const userId = getUserId(event)
+
   const result = await docClient
-    .scan({
-      TableName: todoTable
+    .query({
+      TableName: todoTable,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: {
+        ':userId': userId
+      }
     })
     .promise()
 

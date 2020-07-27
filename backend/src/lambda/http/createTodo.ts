@@ -5,10 +5,11 @@ import {
   APIGatewayProxyHandler,
   APIGatewayProxyResult
 } from 'aws-lambda'
-
-import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
 import * as AWS from 'aws-sdk'
 import * as uuid from 'uuid'
+
+import { getUserId } from '../utils'
+import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
 
 const docClient = new AWS.DynamoDB.DocumentClient()
 
@@ -18,11 +19,16 @@ export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   // TODO: Implement creating a new TODO item
-  const itemId = uuid.v4()
+
+  const userId = getUserId(event)
+  const todoId = uuid.v4()
   const newTodo: CreateTodoRequest = JSON.parse(event.body)
 
   const newItem = {
-    id: itemId,
+    userId,
+    todoId,
+    done: false,
+    createdAt: new Date().toLocaleDateString(),
     ...newTodo
   }
 
@@ -39,7 +45,7 @@ export const handler: APIGatewayProxyHandler = async (
       'Access-Control-Allow-Origin': '*'
     },
     body: JSON.stringify({
-      newItem
+      item: newItem
     })
   }
 }
