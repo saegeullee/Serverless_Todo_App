@@ -7,11 +7,7 @@ import {
 } from 'aws-lambda'
 
 import { getUserId } from '../utils'
-import * as AWS from 'aws-sdk'
-
-const docClient = new AWS.DynamoDB.DocumentClient()
-
-const tableName = process.env.TODO_TABLE
+import { deleteTodo } from '../../businessLogic/todo'
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
@@ -19,15 +15,7 @@ export const handler: APIGatewayProxyHandler = async (
   const userId = getUserId(event)
   const todoId = event.pathParameters.todoId
 
-  await docClient
-    .delete({
-      TableName: tableName,
-      Key: {
-        userId,
-        todoId
-      }
-    })
-    .promise()
+  await deleteTodo(userId, todoId)
 
   return {
     statusCode: 200,

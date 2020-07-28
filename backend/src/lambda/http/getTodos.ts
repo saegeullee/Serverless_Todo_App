@@ -6,14 +6,10 @@ import {
   APIGatewayProxyHandler
 } from 'aws-lambda'
 
-import * as AWS from 'aws-sdk'
 import { getUserId } from '../utils'
+import { getTodos } from '../../businessLogic/todo'
 
-AWS.config.correctClockSkew = true
-
-const docClient = new AWS.DynamoDB.DocumentClient()
-
-const todoTable = process.env.TODO_TABLE
+// AWS.config.correctClockSkew = true
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
@@ -21,17 +17,7 @@ export const handler: APIGatewayProxyHandler = async (
   console.log('Current Processing Event: ', event)
 
   const userId = getUserId(event)
-  const result = await docClient
-    .query({
-      TableName: todoTable,
-      KeyConditionExpression: 'userId = :userId',
-      ExpressionAttributeValues: {
-        ':userId': userId
-      }
-    })
-    .promise()
-
-  const items = result.Items
+  const items = await getTodos(userId)
 
   return {
     statusCode: 200,
