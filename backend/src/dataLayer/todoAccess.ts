@@ -1,6 +1,8 @@
 import * as AWS from 'aws-sdk'
 import * as AWSXRay from 'aws-xray-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
+import { createLogger, format, transports } from 'winston'
+
 import { TodoItem as Todo } from '../models/TodoItem'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
 
@@ -10,7 +12,7 @@ export class TodoAccess {
   private readonly docClient: DocumentClient
   private readonly todoTable: string
   constructor() {
-    this.docClient = new XAWS.DynamoDB.DocumentClient()
+    this.docClient = createDynamoDBClient()
     this.todoTable = process.env.TODO_TABLE
   }
 
@@ -68,3 +70,29 @@ export class TodoAccess {
       .promise()
   }
 }
+
+function createDynamoDBClient() {
+  logger.info('Creating Todos DynamoDB Client...')
+  return new XAWS.DynamoDB.DocumentClient()
+}
+
+const logger = createLogger({
+  level: 'info',
+  format: format.combine(
+    format.timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss'
+    }),
+    format.errors({ stack: true }),
+    format.splat(),
+    format.json()
+  ),
+  defaultMeta: { service: 'your-service-name' },
+  transports: [
+    //
+    // - Write to all logs with level `info` and below to `quick-start-combined.log`.
+    // - Write all logs error (and below) to `quick-start-error.log`.
+    //
+    new transports.File({ filename: 'quick-start-error.log', level: 'error' }),
+    new transports.File({ filename: 'quick-start-combined.log' })
+  ]
+})

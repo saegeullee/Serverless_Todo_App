@@ -15,6 +15,13 @@ provider:
   tracing:
     lambda: true
     apiGateway: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - 'xray:PutTraceSegments'
+          - 'xray:PutTelemetryRecords'
+        Resource:
+          - '*'
 
   name: aws
   runtime: nodejs12.x
@@ -29,24 +36,6 @@ provider:
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'ap-northeast-2'}
-
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:Query
-      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}
-
-    - Effect: Allow
-      Action:
-        - 'xray:PutTraceSegments'
-        - 'xray:PutTelemetryRecords'
-      Resource:
-        - '*'
 
 functions:
   Auth:
@@ -69,6 +58,11 @@ functions:
           method: get
           path: todos
           cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}
 
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
@@ -81,6 +75,11 @@ functions:
           request:
             schema:
               application/json: ${file(models/create-todo-request.json)}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:PutItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}
 
   UpdateTodo:
     handler: src/lambda/http/updateTodo.handler
@@ -89,6 +88,11 @@ functions:
           method: patch
           path: todos/{todoId}
           cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}
 
   DeleteTodo:
     handler: src/lambda/http/deleteTodo.handler
@@ -97,14 +101,24 @@ functions:
           method: delete
           path: todos/{todoId}
           cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:DeleteItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}
 
-  GenerateUploadUrl:
+  UploadUrl:
     handler: src/lambda/http/generateUploadUrl.handler
     events:
       - http:
           method: post
           path: todos/{todoId}/attachment
           cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:UpdateItem
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODO_TABLE}
 
 resources:
   Resources:
