@@ -7,12 +7,14 @@ import { createLogger } from '../../utils/logger'
 // import { Jwt } from '../../auth/Jwt'
 import { JwtPayload } from '../../auth/JwtPayload'
 import * as AWS from 'aws-sdk'
+import * as AWSXRay from 'aws-xray-sdk'
 
+const XAWS = AWSXRay.captureAWS(AWS)
 const logger = createLogger('auth')
 const secretId = process.env.AUTH_0_SECRET_ID
 const secretField = process.env.AUTH_0_SECRET_FIELD
 
-const secretManagerClient = new AWS.SecretsManager()
+const secretManagerClient = new XAWS.SecretsManager()
 
 let cachedSecret: string
 
